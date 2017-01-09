@@ -30,57 +30,32 @@
 # limitations under the License.
 ###############################################################################
 
-# This script stops Instances for specified ',' separated environments in the specified region
+# This script stops Instances based on name provided and suspends auto scaling processes for those instances
 #----------------------------------------------
-# Argument1: ENVIRONMENTS
-# Argument2: REGION
+# Argument1: INSTANCE_NAME
 #----------------------------------------------
 
 #Input Parameters
-ENVIRONMENTS=$1
-REGION=$2
-# Check number of parameters equals 2
-if [ "$#" -ne 2 ]; then
-    echo "ERROR: [Test Code] Illegal number of parameters"
-    exit 1
-fi
-#check environment variable length... must be greater than 1
-if [ ${#ENVIRONMENTS} -le 1 ]; then
-    echo "ERROR: [Test Code] Illegal parameter value"
+INSTANCE_NAME=$1
+# Check number of parameters equals 1
+if [ "$#" -ne 1 ]; then
+    echo "ERROR: Illegal number of parameters"
     exit 1
 fi
 
-IFS=',' read -r -a listToApplyOn <<< $ENVIRONMENTS
-gocdId=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-echo "GOcd Id: " $gocdId
-data=$(aws ec2 describe-instances --region $REGION --query 'Reservations[].Instances[].{id:InstanceId, tag:Tags[?Key==`Name`].Value}'|jq '.')
-total=$(echo ${data} | jq '.|length')
-i=0
-declare -A instances
-command=".[$i].tag[0]"
-while [ "$i" -lt "$total" ]; do
-  getValue=".[$i].tag[0]"
-  getKey=".[$i].id"
-  key=$(echo ${data} | jq ${getKey})
-  key=${key//\"/}
-  value=$(echo ${data} | jq ${getValue})
-  value=${value//\"/}
-  instances["$key"]=$value
-  i=$(($i + 1))
-done
+#find region
+region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+region=${region::-1}
+
 shopt -s lastpipe
-for k in ${!instances[@]}; do
-  for i in ${listToApplyOn[*]}; do
-      if [[ ${instances["$k"]} == *$i* ]]
-      then
-        echo $k ' - ' ${instances["$k"]}
-      fi
-  done
-done | sort -k3 -r | awk '{print $1}' | readarray -t instanceId
-for k in ${instanceId[@]}; do
-  if [ "$k" != "$gocdId"  ]
-  then
-    echo "stopping instance " $k
-    echo $(aws ec2 stop-instances --instance-ids $k --region $REGION)
-  fi
+aws ec2 describe-instances --region $region --query "Reservations[].Instances[?Tags[?Key=='Name'&&Value=='$INSTANCE_NAME']].{id:InstanceId,asgName:Tags[?Key=='aws:autoscaling:groupName'].Value|[0]}" --output text | readarray -t instances
+echo "${instances[@]}"
+for k in "${instances[@]}"; do
+  data=($k)
+
+  echo "suspending processes for ${data[0]}"
+  aws autoscaling suspend-processes --region $region --auto-scaling-group-name ${data[0]} --scaling-processes Launch HealthCheck
+
+  echo "starting instance ${data[1]}"
+  aws ec2 stop-instances --instance-ids ${data[1]} --region $region
 done
