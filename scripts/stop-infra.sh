@@ -50,6 +50,6 @@ fi
 region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 region=${region::-1}
 
-/gocd-data/scripts/suspend-ASG-processes.sh $ENVIRONMENTS $region
-/gocd-data/scripts/stop-instances.sh $ENVIRONMENTS $region
+/house-keeper/house-keeper/scripts/suspend-ASG-processes.sh $ENVIRONMENTS $region
+/house-keeper/house-keeper/scripts/stop-instances.sh $ENVIRONMENTS $region
 

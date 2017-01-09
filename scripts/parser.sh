@@ -13,7 +13,7 @@ for command in "${commands[@]}"; do
 		echo ''
 		echo '[Service]'
                 echo 'Type=oneshot'
-                echo \"ExecStart=/usr/bin/sh -c '/usr/bin/date >> /tmp/date'\"
+                echo \"ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/${data[0]}-infra.sh ${data[1]} >> /house-keeper/logs'\"
        	} > /etc/systemd/system/house-keeper-${data[0]}-${data[1]}-$counter.service"
 	sudo sh -c "{
 		echo '[Unit]'
@@ -22,5 +22,6 @@ for command in "${commands[@]}"; do
 		echo '[Timer]'
 		echo \"OnCalendar=${data[2]}\"
 	} > /etc/systemd/system/house-keeper-${data[0]}-${data[1]}-$counter.timer"
+	sudo systemctl daemon-reload
 	sudo systemctl start house-keeper-${data[0]}-${data[1]}-$counter.timer
 done
