@@ -1,0 +1,6 @@
+[Unit]
+Description=Polls for changes to config file in repo
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/sh -c "/house-keeper/poller.sh"
