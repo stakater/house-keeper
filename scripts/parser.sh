@@ -1,6 +1,6 @@
 #!/bin/bash
 
-readarray commands < house-keeper-config/config
+readarray commands < /house-keeper/house-keeper-config/config
 counter=0
 for command in "${commands[@]}"; do
 	((counter++))
@@ -21,6 +21,6 @@ for command in "${commands[@]}"; do
 		echo ''
 		echo '[Timer]'
 		echo \"OnCalendar=${data[2]}\"
-	} > house-keeper-${data[0]}-${data[1]}-$counter.timer"
+	} > /etc/systemd/system/house-keeper-${data[0]}-${data[1]}-$counter.timer"
 	sudo systemctl start house-keeper-${data[0]}-${data[1]}-$counter.timer
 done

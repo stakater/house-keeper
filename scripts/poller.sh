@@ -2,13 +2,15 @@
 
 #pull repo
 cd /house-keeper/house-keeper-config
-git fetch
-if $(git rev-parse HEAD) == $(git rev-parse @{u}) ; then
+sudo git fetch
+local=$(sudo git rev-parse HEAD)
+remote=$(sudo git rev-parse @{u})
+if [ "$local" == "$remote" ] ; then
    echo "polled at `date`
-  no changes" >> logs
+  no changes" >> /house-keeper/logs
 else
-   output=`cd dummy-repo;git pull`
+   output=`git pull`
    echo "polled at `date`
-  $output" >> logs
-  sudo ./house-keeper/house-keeper/scripts/parser.sh
+  $output" >> /house-keeper/logs
+  sudo /house-keeper/house-keeper/scripts/parser.sh
 fi

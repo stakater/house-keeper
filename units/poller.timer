@@ -1,5 +1,5 @@
 [Unit]
-Description=Run date.service every 10 minutes
+Description=Run poller.service every 1 minutes
 
 [Timer]
 OnCalendar=*-*-* *:*:00
