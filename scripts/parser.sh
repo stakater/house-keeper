@@ -13,8 +13,10 @@ for command in "${commands[@]}"; do
 		echo ''
 		echo '[Service]'
                 echo 'Type=oneshot'
-                echo \"ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/${data[0]}-instances.sh ${data[1]} >> /house-keeper/logs'\"
-       	} > /etc/systemd/system/house-keeper-${data[0]}-${data[1]}-$counter.service"
+                echo \"ExecStartPre=/usr/bin/docker run -d --name %n stakater/aws-cli\"
+                echo \"ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/${data[0]}-instances.sh ${data[1]} %n >> /house-keeper/logs'\"
+       	        echo \"ExecStop=-/usr/bin/docker rm -vf %n\"
+        } > /etc/systemd/system/house-keeper-${data[0]}-${data[1]}-$counter.service"
 	sudo sh -c "{
 		echo '[Unit]'
 		echo \"Description=Run test-${data[0]}-${data[1]}-$counter.service on ${data[2]}\"
