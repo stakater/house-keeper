@@ -33,29 +33,35 @@
 # This script stops Instances based on name provided and suspends auto scaling processes for those instances
 #----------------------------------------------
 # Argument1: INSTANCE_NAME
+# Argument2: CONTAINER_NAME
 #----------------------------------------------
 
 #Input Parameters
 INSTANCE_NAME=$1
-# Check number of parameters equals 1
-if [ "$#" -ne 1 ]; then
+CONTAINER_NAME=$2
+
+# Check number of parameters equals 2
+if [ "$#" -ne 2 ]; then
     echo "ERROR: Illegal number of parameters"
     exit 1
 fi
+
+#log running
+echo 'Running $CONTAINER_NAME on `date`'
 
 #find region
 region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 region=${region::-1}
 
 shopt -s lastpipe
-aws ec2 describe-instances --region $region --query "Reservations[].Instances[?Tags[?Key=='Name'&&Value=='$INSTANCE_NAME']].{id:InstanceId,asgName:Tags[?Key=='aws:autoscaling:groupName'].Value|[0]}" --output text | readarray -t instances
+docker exec $CONTAINER_NAME aws ec2 describe-instances --region $region --query "Reservations[].Instances[?Tags[?Key=='Name'&&Value=='$INSTANCE_NAME']].{id:InstanceId,asgName:Tags[?Key=='aws:autoscaling:groupName'].Value|[0]}" --output text | readarray -t instances
 echo "${instances[@]}"
 for k in "${instances[@]}"; do
   data=($k)
 
   echo "suspending processes for ${data[0]}"
-  aws autoscaling suspend-processes --region $region --auto-scaling-group-name ${data[0]} --scaling-processes Launch HealthCheck
+  docker exec $CONTAINER_NAME aws autoscaling suspend-processes --region $region --auto-scaling-group-name ${data[0]} --scaling-processes Launch HealthCheck
 
   echo "starting instance ${data[1]}"
-  aws ec2 stop-instances --instance-ids ${data[1]} --region $region
+  docker exec $CONTAINER_NAME aws ec2 stop-instances --instance-ids ${data[1]} --region $region
 done
