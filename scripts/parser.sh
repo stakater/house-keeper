@@ -17,7 +17,6 @@ for command in "${commands[@]}"; do
 	((counter++))
 	echo "command is $command"
 	IFS=';' read -ra data <<< "$command"
-	echo "data is $data and first index is ${data[0]}"
 	sudo sh -c "{
 		echo '[Unit]'
                 echo \"Description=${data[0]} ${data[1]} on ${data[2]}\"
