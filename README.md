@@ -18,9 +18,10 @@ start;my-stack-dev-mysql;*-*-* 3:52:00 UTC
 start;my-stack-dev-admiral;*-*-* 3:52:00 UTC
 start;my-stack-dev-worker;*-*-* 3:55:00 UTC
 ```
+You can learn about calendar events used in this file at https://www.freedesktop.org/software/systemd/man/systemd.time.html#
+
 note that you yourself have to take care of dependencies when starting or stopping a server.
 e.g etcd must stop after and start before gocd so we provide the scheduled times accordingly
 
 Apart from this you need to provide your house keeper config repo link in your infrastructure reference repo.
 You need to add your house keeper config repository link in house-keeper-user-data.yaml file
-
