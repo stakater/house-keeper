@@ -34,20 +34,32 @@
 #----------------------------------------------
 # Argument1: INSTANCE_NAME
 # Argument2: CONTAINER_NAME
+# Argument3: REGION
 #----------------------------------------------
 
 #Input Parameters
 INSTANCE_NAME=$1
 CONTAINER_NAME=$2
+REGION=$3
 
-# Check number of parameters equals 2
-if [ "$#" -ne 2 ]; then
+# Check number of parameters equals 2 OR 3
+if [[ "$#" -ne 2 && "$#" -ne 3 ]]; then
     echo "ERROR: Illegal number of parameters"
     exit 1
 fi
 
+if [ "$REGION" != "" ]
+then
+    #use provided region
+    region=$REGION
+else
+    #find region
+    region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+    region=${region::-1}
+fi
+
 #log running
-echo 'Running $CONTAINER_NAME on `date`'
+echo "Stopping $INSTANCE_NAME on `date`"
 
 #find region
 region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
@@ -59,9 +71,9 @@ echo "${instances[@]}"
 for k in "${instances[@]}"; do
   data=($k)
 
-  echo "suspending processes for ${data[0]}"
+  echo "suspending processes for ${data[0]} in region $region"
   docker exec $CONTAINER_NAME aws autoscaling suspend-processes --region $region --auto-scaling-group-name ${data[0]} --scaling-processes Launch HealthCheck
 
-  echo "starting instance ${data[1]}"
+  echo "stopping instance ${data[1]} in region $region"
   docker exec $CONTAINER_NAME aws ec2 stop-instances --instance-ids ${data[1]} --region $region
 done

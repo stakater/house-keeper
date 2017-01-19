@@ -34,31 +34,40 @@
 #----------------------------------------------
 # Argument1: INSTANCE_NAME
 # Argument2: CONTAINER_NAME
+# Argument3: REGION
 #----------------------------------------------
 
 #Input Parameters
 INSTANCE_NAME=$1
 CONTAINER_NAME=$2
-# Check number of parameters equals 2
-if [ "$#" -ne 2 ]; then
+REGION=$3
+
+# Check number of parameters equals 2 OR 3
+if [[ "$#" -ne 2 && "$#" -ne 3 ]]; then
     echo "ERROR: Illegal number of parameters"
     exit 1
 fi
 
-#find region
-region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
-region=${region::-1}
+if [ "$REGION" != "" ]
+then
+    #use provided region
+    region=$REGION
+else
+    #find region
+    region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+    region=${region::-1}
+fi
 
 #log running
-echo 'Running $CONTAINER_NAME on `date`'
+echo "Starting $INSTANCE_NAME on `date`"
 
 shopt -s lastpipe
 docker exec $CONTAINER_NAME aws ec2 describe-instances --region $region --query "Reservations[].Instances[?Tags[?Key=='Name'&&Value=='$INSTANCE_NAME']].{id:InstanceId,asgName:Tags[?Key=='aws:autoscaling:groupName'].Value|[0]}" --output text | readarray -t instances
 echo "${instances[@]}"
 for k in "${instances[@]}"; do
   data=($k)
-  echo "starting instance ${data[1]}"
+  echo "starting instance ${data[1]} in region $region"
   docker exec $CONTAINER_NAME aws ec2 start-instances --instance-ids ${data[1]} --region $region
-  echo "resuming processes for ${data[0]}"
+  echo "resuming processes for ${data[0]}  in region $region"
   docker exec $CONTAINER_NAME aws autoscaling resume-processes --region $region --auto-scaling-group-name ${data[0]} --scaling-processes Launch HealthCheck
 done
