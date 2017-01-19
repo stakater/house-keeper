@@ -3,14 +3,15 @@
 readarray commands < /house-keeper/house-keeper-config/config
 counter=0
 
-#remove old timers
+#stop old timers
 shopt -s lastpipe
 sudo systemctl list-timers --all | grep "house-keeper.*timer" -o | readarray -t timers
 for t in ${timers[@]}; do
 	echo "stoping timer $t"
 	sudo systemctl stop $t
-	sudo rm /etc/systemd/system/house-keeper-s*
 done
+#remove old timer files
+sudo rm /etc/systemd/system/house-keeper-s*
 
 #add new timers
 for command in "${commands[@]}"; do
