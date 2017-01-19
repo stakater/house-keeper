@@ -9,7 +9,7 @@ sudo systemctl list-timers --all | grep "house-keeper.*timer" -o | readarray -t 
 for t in ${timers[@]}; do
 	echo "stoping timer $t"
 	sudo systemctl stop $t
-	sudo rm house-keeper-s*
+	sudo rm /etc/systemd/system/house-keeper-s*
 done
 
 #add new timers
