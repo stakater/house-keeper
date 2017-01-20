@@ -25,7 +25,7 @@ for command in "${commands[@]}"; do
 		echo '[Service]'
                 echo 'Type=oneshot'
                 echo \"ExecStartPre=/usr/bin/docker run -d --name %n stakater/aws-cli\"
-                echo \"ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/${data[0]}-instances.sh \"${data[1]}\" \"%n\" \"${data[3]}\" >> /house-keeper/logs'\"
+                echo \"ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/${data[0]}-instances.sh \\\"${data[1]}\\\" \\\"%n\\\" \\\"${data[3]}\\\" >> /house-keeper/logs'\"
        	        echo \"ExecStop=-/usr/bin/docker rm -vf %n\"
         } > /etc/systemd/system/house-keeper-${data[0]}-${data[1]}-${data[3]}-$counter.service"
 	sudo sh -c "{
