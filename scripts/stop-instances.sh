@@ -61,10 +61,6 @@ fi
 #log running
 echo "Stopping $INSTANCE_NAME on `date`"
 
-#find region
-region=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
-region=${region::-1}
-
 shopt -s lastpipe
 docker exec $CONTAINER_NAME aws ec2 describe-instances --region $region --query "Reservations[].Instances[?Tags[?Key=='Name'&&Value=='$INSTANCE_NAME']].{id:InstanceId,asgName:Tags[?Key=='aws:autoscaling:groupName'].Value|[0]}" --output text | readarray -t instances
 echo "${instances[@]}"
