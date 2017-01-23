@@ -64,10 +64,34 @@ echo "Starting $INSTANCE_NAME on `date`"
 shopt -s lastpipe
 docker exec $CONTAINER_NAME aws ec2 describe-instances --region $region --query "Reservations[].Instances[?Tags[?Key=='Name'&&Value=='$INSTANCE_NAME']].{id:InstanceId,asgName:Tags[?Key=='aws:autoscaling:groupName'].Value|[0]}" --output text | readarray -t instances
 echo "${instances[@]}"
-for k in "${instances[@]}"; do
-  data=($k)
+asg_name="";
+instanceIds="";
+#start instances
+for instance in "${instances[@]}"; do
+  data=($instance)
+  asg_name=${data[0]}
+  instanceIds="$instanceIds ${data[1]}"
   echo "starting instance ${data[1]} in region $region"
   docker exec $CONTAINER_NAME aws ec2 start-instances --instance-ids ${data[1]} --region $region
-  echo "resuming processes for ${data[0]}  in region $region"
-  docker exec $CONTAINER_NAME aws autoscaling resume-processes --region $region --auto-scaling-group-name ${data[0]} --scaling-processes Launch HealthCheck
 done
+
+#wait for instances to start before resuming processes
+instances=($instanceIds)
+count=1
+while [[ $count -lt 120 && ${#instances[@]} != 0 ]]
+do
+  echo "Waiting for ${instances[@]} to start"
+  sleep 5
+  for instance in "${instances[@]}"; do
+    state=`docker exec $CONTAINER_NAME aws ec2 describe-instances --region $region --query "Reservations[].Instances[?InstanceId=='$instance'].State.Name" --output text`
+    echo "$instance is $state"
+    if [ "$state" == "running" ]
+    then
+      instances=(`echo "${instances[@]/$instance}"`)
+    fi
+  done
+done
+
+#Resuming Processses
+echo "resuming processes for $asg_name  in region $region"
+docker exec $CONTAINER_NAME aws autoscaling resume-processes --region $region --auto-scaling-group-name $asg_name --scaling-processes Launch HealthCheck
