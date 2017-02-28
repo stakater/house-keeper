@@ -12,5 +12,5 @@ else
    output=`git pull`
    echo "polled at `date`
   $output" >> /house-keeper/logs
-  /house-keeper/house-keeper/scripts/parser.sh
+  python /house-keeper/house-keeper/scripts/parser.py
 fi

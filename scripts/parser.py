@@ -20,7 +20,7 @@ if __name__ == "__main__":
                 print("executing %s"%command)
                 subprocess.call(shlex.split(command))
             os.remove(os.path.join("/etc/systemd/system",file))
-    f = open('config.yaml')
+    f = open('/house-keeper/house-keeper-config/config.yml')
     #use safe_load instead load
     dataMap = yaml.safe_load(f)
     f.close()
@@ -57,7 +57,7 @@ if __name__ == "__main__":
             startTimerFile.close()
 
             command="sudo systemctl daemon-reload"
-            command1="sudo systemctl start start-%s"%timerName
+            command1="sudo systemctl start house-keeper-start-%s"%timerName
             print("executing %s ; %s"%(command,command1))
             subprocess.call(shlex.split(command))
             subprocess.call(shlex.split(command1))
@@ -80,7 +80,7 @@ if __name__ == "__main__":
             stopTimerFile.close()
 
             command="sudo systemctl daemon-reload"
-            command1="sudo systemctl start stop-%s"%timerName
+            command1="sudo systemctl start house-keeper-stop-%s"%timerName
             print("executing %s ; %s"%(command,command1))
             subprocess.call(shlex.split(command))
             subprocess.call(shlex.split(command1))
