@@ -62,7 +62,7 @@ if __name__ == "__main__":
             subprocess.call(shlex.split(command))
             subprocess.call(shlex.split(command1))
 
-            stopTime = schedule["startTime"]
+            stopTime = schedule["stopTime"]
             stopServiceFile = open("/etc/systemd/system/house-keeper-stop-%s"%serviceName, 'w')
             stopServiceFile.write("[Unit]\n"+
                                   "Description=Stop %s on %s in %s\n\n" %(instanceName,stopTime,region)+
