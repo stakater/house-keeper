@@ -40,7 +40,7 @@ if __name__ == "__main__":
                 serviceName = instanceName + "-%d"%(scheduleCount) + ".service"
                 timerName = instanceName + "-%d"%(scheduleCount) + ".timer"
             startTime = schedule["startTime"]
-            startServiceFile = open("/etc/systemd/system/start-%s"%serviceName, 'w')
+            startServiceFile = open("/etc/systemd/system/house-keeper-start-%s"%serviceName, 'w')
             startServiceFile.write("[Unit]\n"+
                                    "Description=Start %s on %s in %s\n\n" %(instanceName,startTime,region)+
                                    "[Service]\n"+
@@ -49,9 +49,9 @@ if __name__ == "__main__":
                                    "ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/start-instances.sh \"%s\" \"%%n\" \"%s\" >> /house-keeper/logs'\n" %(instanceName,region)+
                                    "ExecStop=-/usr/bin/docker rm -vf %n")
             startServiceFile.close()
-            startTimerFile = open("/etc/systemd/system/start-%s"%timerName, 'w')
+            startTimerFile = open("/etc/systemd/system/house-keeper-start-%s"%timerName, 'w')
             startTimerFile.write("[Unit]\n"+
-                                 "Description=Run %s on %s\n\n" %(serviceName, startTime)+
+                                 "Description=Run house-keeper-start-%s on %s\n\n" %(serviceName, startTime)+
                                  "[Timer]\n"+
                                  "OnCalendar=%s\n" %startTime)
             startTimerFile.close()
@@ -63,7 +63,7 @@ if __name__ == "__main__":
             subprocess.call(shlex.split(command1))
 
             stopTime = schedule["startTime"]
-            stopServiceFile = open("/etc/systemd/system/stop-%s"%serviceName, 'w')
+            stopServiceFile = open("/etc/systemd/system/house-keeper-stop-%s"%serviceName, 'w')
             stopServiceFile.write("[Unit]\n"+
                                   "Description=Stop %s on %s in %s\n\n" %(instanceName,stopTime,region)+
                                   "[Service]\n"+
@@ -72,9 +72,9 @@ if __name__ == "__main__":
                                   "ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/stop-instances.sh \"%s\" \"%%n\" \"%s\" >> /house-keeper/logs'\n" %(instanceName,region)+
                                   "ExecStop=-/usr/bin/docker rm -vf %n")
             stopServiceFile.close()
-            stopTimerFile = open("/etc/systemd/system/stop-%s"%timerName, 'w')
+            stopTimerFile = open("/etc/systemd/system/house-keeper-stop-%s"%timerName, 'w')
             stopTimerFile.write("[Unit]\n"+
-                                "Description=Run %s on %s\n\n" %(serviceName, stopTime)+
+                                "Description=Run house-keeper-stop-%s on %s\n\n" %(serviceName, stopTime)+
                                 "[Timer]\n"+
                                 "OnCalendar=%s\n" %stopTime)
             stopTimerFile.close()
@@ -84,3 +84,5 @@ if __name__ == "__main__":
             print("executing %s ; %s"%(command,command1))
             subprocess.call(shlex.split(command))
             subprocess.call(shlex.split(command1))
+        else:
+            print("Invalid input schedule:\n%s"+input_schedule)
