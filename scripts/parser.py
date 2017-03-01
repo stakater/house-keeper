@@ -8,7 +8,7 @@ class ScheduleBuilder(object):
     #---------------------------------------------------------------------
 
     def buildSchedule(self,dictionary):
-        if "name" in dictionary and "startTime" in dictionary and "stopTime" in dictionary:
+        if "name" in dictionary and "asg" in dictionary and "startTime" in dictionary and "stopTime" in dictionary:
             return dictionary
 
 if __name__ == "__main__":
@@ -31,6 +31,7 @@ if __name__ == "__main__":
         if schedule:
             scheduleCount = scheduleCount+1
             instanceName=schedule["name"]
+            asg=schedule["asg"]
             if "region" in schedule:
                 region = schedule["region"]
                 serviceName = instanceName + "-" + region + "-%d" %(scheduleCount) + ".service"
@@ -46,7 +47,7 @@ if __name__ == "__main__":
                                    "[Service]\n"+
                                    "Type=oneshot\n"+
                                    "ExecStartPre=/usr/bin/docker run -d --name %n stakater/aws-cli\n"+
-                                   "ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/start-instances.sh \"%s\" \"%%n\" \"%s\" >> /house-keeper/logs'\n" %(instanceName,region)+
+                                   "ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/start-instances.sh \"%s\" \"%%n\" \"%s\" \"%s\" >> /house-keeper/logs'\n" %(instanceName,region,asg)+
                                    "ExecStop=-/usr/bin/docker rm -vf %n")
             startServiceFile.close()
             startTimerFile = open("/etc/systemd/system/house-keeper-start-%s"%timerName, 'w')
@@ -69,7 +70,7 @@ if __name__ == "__main__":
                                   "[Service]\n"+
                                   "Type=oneshot\n"+
                                   "ExecStartPre=/usr/bin/docker run -d --name %n stakater/aws-cli\n"+
-                                  "ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/stop-instances.sh \"%s\" \"%%n\" \"%s\" >> /house-keeper/logs'\n" %(instanceName,region)+
+                                  "ExecStart=/usr/bin/sh -c '/house-keeper/house-keeper/scripts/stop-instances.sh \"%s\" \"%%n\" \"%s\" \"%s\" >> /house-keeper/logs'\n" %(instanceName,region,asg)+
                                   "ExecStop=-/usr/bin/docker rm -vf %n")
             stopServiceFile.close()
             stopTimerFile = open("/etc/systemd/system/house-keeper-stop-%s"%timerName, 'w')
