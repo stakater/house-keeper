@@ -70,6 +70,13 @@ for k in "${instances[@]}"; do
   echo "suspending processes for ${data[0]} in region $region"
   docker exec $CONTAINER_NAME aws autoscaling suspend-processes --region $region --auto-scaling-group-name ${data[0]} --scaling-processes Launch HealthCheck
 
+  suspended_processes=""
+  while [[ $count -lt 6 && $suspended_processes == *"Launch"* && $suspended_processes == *"HealthCheck"* ]]
+  do
+    suspended_processes=`docker exec $CONTAINER_NAME aws autoscaling describe-auto-scaling-groups --region $region --auto-scaling-group-name ${data[0]} --query "AutoScalingGroups[0].SuspendedProcesses[].ProcessName" --output text`
+    ((count=count+1))
+  done
+
   echo "stopping instance ${data[1]} in region $region"
   docker exec $CONTAINER_NAME aws ec2 stop-instances --instance-ids ${data[1]} --region $region
 done

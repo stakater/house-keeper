@@ -90,6 +90,7 @@ do
       instances=(`echo "${instances[@]/$instance}"`)
     fi
   done
+  ((count=count+1))
 done
 
 #Resuming Processses
