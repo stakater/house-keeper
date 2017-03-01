@@ -70,7 +70,7 @@ for k in "${instances[@]}"; do
   data=($k)
 
   #check if it has ASG
-  if [[ "$HAS_ASG" == "true" ]]
+  if [[ "${HAS_ASG,,}" == "true" ]]
   then
     echo "suspending processes for ${data[0]} in region $region"
     docker exec $CONTAINER_NAME aws autoscaling suspend-processes --region $region --auto-scaling-group-name ${data[0]} --scaling-processes Launch HealthCheck

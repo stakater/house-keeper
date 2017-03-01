@@ -78,7 +78,7 @@ for instance in "${instances[@]}"; do
 done
 
 #exit if no ASG
-if [[ "$HAS_ASG" == "false" ]]
+if [[ "${HAS_ASG,,}" == "false" ]]
 then
   exit 0
 fi
