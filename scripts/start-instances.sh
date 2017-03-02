@@ -35,15 +35,17 @@
 # Argument1: INSTANCE_NAME
 # Argument2: CONTAINER_NAME
 # Argument3: REGION
+# Argument4: HAS_ASG
 #----------------------------------------------
 
 #Input Parameters
 INSTANCE_NAME=$1
 CONTAINER_NAME=$2
 REGION=$3
+HAS_ASG=$4
 
-# Check number of parameters equals 2 OR 3
-if [[ "$#" -ne 2 && "$#" -ne 3 ]]; then
+# Check number of parameters equals 4
+if [[ "$#" -ne 4 ]]; then
     echo "ERROR: Illegal number of parameters"
     exit 1
 fi
@@ -62,7 +64,7 @@ fi
 echo "Starting $INSTANCE_NAME on `date`"
 
 shopt -s lastpipe
-docker exec $CONTAINER_NAME aws ec2 describe-instances --region $region --query "Reservations[].Instances[?Tags[?Key=='Name'&&Value=='$INSTANCE_NAME']].{id:InstanceId,asgName:Tags[?Key=='aws:autoscaling:groupName'].Value|[0]}" --output text | readarray -t instances
+docker exec $CONTAINER_NAME aws ec2 describe-instances --region $region --query "Reservations[].Instances[?State.Name!='terminated'&&Tags[?Key=='Name'&&Value=='$INSTANCE_NAME']].{id:InstanceId,asgName:Tags[?Key=='aws:autoscaling:groupName'].Value|[0]}" --output text | readarray -t instances
 echo "${instances[@]}"
 asg_name="";
 instanceIds="";
@@ -74,6 +76,12 @@ for instance in "${instances[@]}"; do
   echo "starting instance ${data[1]} in region $region"
   docker exec $CONTAINER_NAME aws ec2 start-instances --instance-ids ${data[1]} --region $region
 done
+
+#exit if no ASG
+if [[ "${HAS_ASG,,}" == "false" ]]
+then
+  exit 0
+fi
 
 #wait for instances to start before resuming processes
 instances=($instanceIds)
@@ -90,6 +98,7 @@ do
       instances=(`echo "${instances[@]/$instance}"`)
     fi
   done
+  ((count=count+1))
 done
 
 #Resuming Processses

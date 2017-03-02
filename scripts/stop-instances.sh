@@ -35,15 +35,17 @@
 # Argument1: INSTANCE_NAME
 # Argument2: CONTAINER_NAME
 # Argument3: REGION
+# Argument4: HAS_ASG
 #----------------------------------------------
 
 #Input Parameters
 INSTANCE_NAME=$1
 CONTAINER_NAME=$2
 REGION=$3
+HAS_ASG=$4
 
-# Check number of parameters equals 2 OR 3
-if [[ "$#" -ne 2 && "$#" -ne 3 ]]; then
+# Check number of parameters equals 4
+if [[ "$#" -ne 4 ]]; then
     echo "ERROR: Illegal number of parameters"
     exit 1
 fi
@@ -62,14 +64,28 @@ fi
 echo "Stopping $INSTANCE_NAME on `date`"
 
 shopt -s lastpipe
-docker exec $CONTAINER_NAME aws ec2 describe-instances --region $region --query "Reservations[].Instances[?Tags[?Key=='Name'&&Value=='$INSTANCE_NAME']].{id:InstanceId,asgName:Tags[?Key=='aws:autoscaling:groupName'].Value|[0]}" --output text | readarray -t instances
+docker exec $CONTAINER_NAME aws ec2 describe-instances --region $region --query "Reservations[].Instances[?State.Name!='terminated'&&Tags[?Key=='Name'&&Value=='$INSTANCE_NAME']].{id:InstanceId,asgName:Tags[?Key=='aws:autoscaling:groupName'].Value|[0]}" --output text | readarray -t instances
 echo "${instances[@]}"
 for k in "${instances[@]}"; do
   data=($k)
 
-  echo "suspending processes for ${data[0]} in region $region"
-  docker exec $CONTAINER_NAME aws autoscaling suspend-processes --region $region --auto-scaling-group-name ${data[0]} --scaling-processes Launch HealthCheck
+  #check if it has ASG
+  if [[ "${HAS_ASG,,}" == "true" ]]
+  then
+    echo "suspending processes for ${data[0]} in region $region"
+    docker exec $CONTAINER_NAME aws autoscaling suspend-processes --region $region --auto-scaling-group-name ${data[0]} --scaling-processes Launch HealthCheck
 
+    suspended_processes=""
+    count=0
+    while [[ $count -lt 10 && ( $suspended_processes != *"Launch"* || $suspended_processes != *"HealthCheck"* ) ]]
+    do
+      echo "waiting for ${data[0]}'s processes to be suspended"
+      sleep 2
+      suspended_processes=`docker exec $CONTAINER_NAME aws autoscaling describe-auto-scaling-groups --region $region --auto-scaling-group-name ${data[0]} --query "AutoScalingGroups[0].SuspendedProcesses[].ProcessName" --output text`
+      ((count=count+1))
+    done
+
+  fi
   echo "stopping instance ${data[1]} in region $region"
   docker exec $CONTAINER_NAME aws ec2 stop-instances --instance-ids ${data[1]} --region $region
 done
