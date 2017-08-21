@@ -9,6 +9,7 @@ Note there are 4 parts of each line separated by ';'.
 <li>The third part specifies the calendar event when this action is to be performed.</li>
 <li>The fourth part is the aws region in which instance is running on. It is optional and should be specified if the specified resource is in a different region than the one house-keeper is running on</li>
 </ul>
+
 ```
 stop;my-stack-dev-worker;*-*-* 19:30:00 UTC;us-west-2
 stop;my-stack-dev-admiral;*-*-* 19:33:00 UTC
@@ -25,6 +26,7 @@ start;my-stack-dev-mysql;*-*-* 3:52:00 UTC
 start;my-stack-dev-admiral;*-*-* 3:52:00 UTC
 start;my-stack-dev-worker;*-*-* 3:55:00 UTC;us-west-2
 ```
+
 You can learn about calendar events used in this file at https://www.freedesktop.org/software/systemd/man/systemd.time.html#
 
 note that you yourself have to take care of dependencies when starting or stopping a server.
